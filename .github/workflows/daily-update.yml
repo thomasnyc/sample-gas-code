@@ -17,11 +17,14 @@ jobs:
         with:
           python-version: '3.x'
 
-      # NEW STEP: Install the web scraping libraries
       - name: Install dependencies
-        run: pip install requests beautifulsoup4
+        # Install the official Google Generative AI SDK
+        run: pip install google-generativeai
 
       - name: Run Python script
+        env:
+          # Pass the Gemini Secret to the Python script
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python update_data.py
 
       - name: Commit and push changes
@@ -29,5 +32,5 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add data.json
-          git commit -m "Automated daily gas price update" || exit 0
+          git commit -m "Automated daily gas price update via Gemini" || exit 0
           git push
