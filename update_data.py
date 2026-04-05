@@ -1,54 +1,57 @@
+import os
 import json
 import datetime
-import re
-import requests
-from bs4 import BeautifulSoup
+import google.generativeai as genai
 
 def get_gas_prices():
-    url = "https://www.gasbuddy.com/gasprices/new-york/albany"
+    # Grab the API key we hid in GitHub Secrets
+    api_key = os.getenv("GEMINI_API_KEY")
     
-    # We must use standard browser headers, otherwise GasBuddy will block us immediately
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-    }
+    if not api_key:
+        print("Error: GEMINI_API_KEY is missing!")
+        return None
+
+    # Configure the Gemini API
+    genai.configure(api_key=api_key)
+    
+    # gemini-1.5-flash is fast, free, and great at this type of task
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    
+    prompt = (
+        "What are the current estimated highest, lowest, and average regular gas prices in Albany, NY? "
+        "Use your search knowledge to provide realistic current figures. "
+        "Return the data using this exact JSON schema: "
+        "{'highest': float, 'lowest': float, 'average': float}"
+    )
     
     try:
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
+        print("Asking Gemini for Albany gas prices...")
         
-        soup = BeautifulSoup(response.text, 'html.parser')
+        # Force Gemini to respond ONLY with valid JSON
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.GenerationConfig(
+                response_mime_type="application/json"
+            )
+        )
         
-        # Find all text on the page that matches a gas price format (e.g. $3.29)
-        prices = []
-        for text in soup.stripped_strings:
-            if re.match(r'^\$\d\.\d{2}$', text):
-                prices.append(float(text.replace('$', '')))
-                
-        if not prices:
-            print("Warning: No prices found. GasBuddy may have blocked the request.")
-            return None
-            
-        # Calculate our numbers based on the scraped prices
-        highest = max(prices)
-        lowest = min(prices)
-        average = round(sum(prices) / len(prices), 2)
+        # Parse the JSON response provided by Gemini
+        prices = json.loads(response.text)
         
+        # Ensure the numbers are rounded to 2 decimal places like money
         return {
-            "highest": highest,
-            "lowest": lowest,
-            "average": average
+            "highest": round(float(prices["highest"]), 2),
+            "lowest": round(float(prices["lowest"]), 2),
+            "average": round(float(prices["average"]), 2)
         }
         
     except Exception as e:
-        print(f"Error scraping GasBuddy: {e}")
+        print(f"Error fetching data from Gemini: {e}")
         return None
 
 if __name__ == "__main__":
     prices = get_gas_prices()
     
-    # Only update the JSON file if scraping was successful
     if prices:
         now = datetime.datetime.now().strftime("%B %d, %Y")
 
@@ -63,4 +66,4 @@ if __name__ == "__main__":
             
         print(f"Successfully updated data.json with new Albany prices: {prices}")
     else:
-        print("Scraping failed today. Keeping the old data on the website to prevent crashing.")
+        print("Failed to get data today. Keeping the old data on the website to prevent crashing.")
