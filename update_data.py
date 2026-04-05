@@ -14,7 +14,7 @@ def get_gas_prices():
     # Configure the Gemini API
     genai.configure(api_key=api_key)
     
-    # gemini-1.5-flash is fast, free, and great at this type of task
+    # Use the highly stable, free-tier approved model
     model = genai.GenerativeModel('gemini-1.5-flash')
     
     prompt = (
