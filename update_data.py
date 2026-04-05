@@ -15,7 +15,7 @@ def get_gas_prices():
     genai.configure(api_key=api_key)
     
     # gemini-1.5-flash is fast, free, and great at this type of task
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-3.0-flash')
     
     prompt = (
         "What are the current estimated highest, lowest, and average regular gas prices in Albany, NY? "
