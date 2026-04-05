@@ -1,7 +1,8 @@
 import os
 import json
 import datetime
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 def get_gas_prices():
     # Grab the API key we hid in GitHub Secrets
@@ -11,11 +12,8 @@ def get_gas_prices():
         print("Error: GEMINI_API_KEY is missing!")
         return None
 
-    # Configure the Gemini API
-    genai.configure(api_key=api_key)
-    
-    # Use the highly stable, free-tier approved model
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    # Initialize the NEW 2026 Google GenAI Client
+    client = genai.Client(api_key=api_key)
     
     prompt = (
         "What are the current estimated highest, lowest, and average regular gas prices in Albany, NY? "
@@ -27,11 +25,13 @@ def get_gas_prices():
     try:
         print("Asking Gemini for Albany gas prices...")
         
+        # Use the newest, actively supported free-tier model (Gemini 2.5 Flash)
         # Force Gemini to respond ONLY with valid JSON
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(
-                response_mime_type="application/json"
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
             )
         )
         
