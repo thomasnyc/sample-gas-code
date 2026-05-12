@@ -1,9 +1,9 @@
 {
     "location": "Albany, NY",
-    "date": "May 11, 2026",
+    "date": "May 12, 2026",
     "prices": {
-        "highest": 3.89,
-        "lowest": 3.59,
-        "average": 3.69
+        "highest": 3.79,
+        "lowest": 3.39,
+        "average": 3.59
     }
 }
